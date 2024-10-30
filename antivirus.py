@@ -6,6 +6,8 @@ import threading
 import time
 from typing import Dict, List, Set, Optional
 import random
+import argparse
+
 
 LINEAL_WORK_TIME = 2  # segundos
 # SCAN_DIRECTORY = "./folder-for-scanning"
@@ -338,13 +340,33 @@ class ScanManager:
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description='Antivirus Scanner - Escanea directorios en busca de amenazas'
+    )
+    parser.add_argument(
+        '-d', 
+        '--directory',
+        type=str,
+        required=True,
+        help='Directorio a escanear'
+    )
+
+    # Parsear los argumentos
+    args = parser.parse_args()
+
+    directory = args.directory
+    # Verificar que el directorio existe
+    if not os.path.isdir(directory):
+        print(f"Error: El directorio '{directory}' no existe, se escanea por defecto")
+        directory = SCAN_DIRECTORY
+    
     # Crear el scanner y añadir el observador de consola
     scanner = AntivirusScanner()
     scan_manager = ScanManager()
 
     # Crear el comando
     command = ScanDirectoryCommand(
-        directory=SCAN_DIRECTORY,
+        directory=directory,
         scanner=scanner,
         console_observer=ConsoleObserver(),
     )
@@ -354,7 +376,8 @@ def main():
 
     try:
         # Iniciar el escaneo
-        print("Iniciando escaneo...")
+        print(f"Iniciando escaneo en: {directory}")
+
 
         # Ejecutar el escaneo
         scan_manager.execute_scan()
