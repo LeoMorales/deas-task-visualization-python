@@ -40,8 +40,10 @@ classDiagram
         +str current_file
         +int infected_count
         +int error_count
+        +Optional[FileResult] last_result
         +update(increment: bool)
-        +percentage() float
+        +float percentage
+        +float remaining_time
     }
 
     class ScanObserver {
@@ -59,33 +61,57 @@ classDiagram
 
     class AntivirusScanner {
         -List[ScanObserver] observers
+        -ScannerState state
         -ScanProgress progress
         -List[FileResult] results
         -Thread _scan_thread
         -Event _pause_event
         -Event _stop_event
         -Dict virus_words
-        +ScannerState state
         +add_observer(observer: ScanObserver)
         +remove_observer(observer: ScanObserver)
+        +start_scan(directory: str)
+        +pause_scan()
+        +resume_scan()
+        +stop_scan()
         -_notify_progress()
         -_notify_file_scanned(result: FileResult)
         -_notify_completed()
         -_analyze_content(contenido: str)
         -_scan_file(file_path: str)
         -_scanning_task(directory: str)
-        +start_scan(directory: str)
-        +pause_scan()
-        +resume_scan()
-        +stop_scan()
+    }
+
+    class Command {
+        <<abstract>>
+        +execute()*
+        +cancel()*
+    }
+
+    class ScanDirectoryCommand {
+        -str directory
+        -AntivirusScanner scanner
+        +execute()
+        +cancel()
+    }
+
+    class ScanManager {
+        -Command current_command
+        +set_on_scan(command: Command)
+        +execute_scan()
+        +cancel_current_scan()
     }
 
     ScanObserver <|-- ConsoleObserver
-    AntivirusScanner o-- ScanObserver
+    Command <|-- ScanDirectoryCommand
     AntivirusScanner o-- ScanProgress
-    AntivirusScanner --> FileResult
-    AntivirusScanner --> ScannerState
-    FileResult --> FileStatus
+    AntivirusScanner o-- FileResult
+    AntivirusScanner o-- "0..*" ScanObserver
+    ScanDirectoryCommand o-- AntivirusScanner
+    ScanManager o-- Command
+    FileResult o-- FileStatus
+    AntivirusScanner o-- ScannerState
+    ScanProgress o-- FileResult
   
 ```
 
