@@ -9,7 +9,7 @@ import random
 
 LINEAL_WORK_TIME = 2  # segundos
 # SCAN_DIRECTORY = "./folder-for-scanning"
-SCAN_DIRECTORY = "./clean-folder"
+SCAN_DIRECTORY = "./mocks/clean-folder"
 
 
 class FileStatus(Enum):

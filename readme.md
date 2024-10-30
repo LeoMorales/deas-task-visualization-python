@@ -89,3 +89,16 @@ classDiagram
   
 ```
 
+# Ejecutar la prueba
+
+![task run](./docs/static/mock-antivirus.png "Task execution")
+
+# Ejecutar los test en Gherkin
+
+![behave execution](./docs/static/behave-execution.png "Behave execution")
+
+# Dependencias
+
+- python >= 3.11.9
+- behave (solo para BDD):
+    `conda install conda-forge::behave` o `pip install behave` 
