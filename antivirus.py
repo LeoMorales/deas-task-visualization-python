@@ -42,6 +42,8 @@ class ScanProgress:
         self.infected_count = 0
         self.error_count = 0
         self._lock = threading.Lock()
+        # guardamos el último resultado
+        self.last_result: Optional[FileResult] = None
 
     def update(self, increment: bool = True):
         with self._lock:
@@ -53,6 +55,12 @@ class ScanProgress:
         if self.total_files == 0:
             return 0
         return (self.processed_files / self.total_files) * 100
+
+    @property
+    def remaining_time(self) -> float:
+        if self.last_result == None:
+            return 36000000
+        return self.last_result.scan_time * (self.total_files - self.processed_files)
 
 
 class ScanObserver(ABC):
@@ -72,7 +80,7 @@ class ScanObserver(ABC):
 class ConsoleObserver(ScanObserver):
     def on_progress_update(self, progress: ScanProgress) -> None:
         print(
-            f"\rProgreso: {progress.percentage:.1f}% - Escaneando: {progress.current_file}",
+            f"\rProgreso: {progress.percentage:.1f}% {progress.remaining_time:.1f} segundos faltantes - Escaneando: {progress.current_file}",
             end="",
         )
 
@@ -209,6 +217,9 @@ class AntivirusScanner:
                     self.progress.infected_count += 1
                 elif result.status == FileStatus.ERROR:
                     self.progress.error_count += 1
+
+                # guardamos el último resultado:
+                self.progress.last_result = result
 
                 self.progress.update()
                 self._notify_progress()
