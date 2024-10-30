@@ -255,33 +255,98 @@ class AntivirusScanner:
         self.state = ScannerState.CANCELLED
 
 
+class Command(ABC):
+    @abstractmethod
+    def execute(self) -> None:
+        pass
+
+    @abstractmethod
+    def cancel(self) -> None:
+        pass
+
+
+class ScanDirectoryCommand(Command):
+    def __init__(
+        self,
+        directory: str,
+        scanner: AntivirusScanner,
+        console_observer: Optional[ConsoleObserver] = None,
+    ):
+        self.directory = directory
+        self.scanner = scanner
+
+        # Si se proporciona un observer, lo agregamos al scanner
+        if console_observer:
+            self.scanner.add_observer(console_observer)
+
+    def execute(self) -> None:
+        """
+        Ejecuta el comando de escaneo del directorio.
+        """
+        # Iniciamos el escaneo utilizando la funcionalidad existente
+        self.scanner.start_scan(self.directory)
+
+        # Esperamos hasta que el escaneo termine o sea cancelado
+        while self.scanner.state in [ScannerState.SCANNING, ScannerState.PAUSED]:
+            time.sleep(0.1)
+
+    def cancel(self) -> None:
+        """
+        Cancela la operación de escaneo en curso.
+        """
+        self.scanner.stop_scan()
+
+
+class ScanManager:
+    def __init__(self):
+        self.current_command = None
+
+    def set_on_scan(self, command: Command) -> None:
+        """
+        Establece el comando a ejecutar.
+        """
+        self.current_command = command
+
+    def execute_scan(self) -> None:
+        """
+        Ejecuta el comando actual si existe.
+        """
+        if self.current_command:
+            self.current_command.execute()
+
+    def cancel_current_scan(self) -> None:
+        """
+        Cancela el escaneo actual si existe.
+        """
+        if self.current_command:
+            self.current_command.cancel()
+
+
 def main():
     # Crear el scanner y añadir el observador de consola
     scanner = AntivirusScanner()
-    console_observer = ConsoleObserver()
-    scanner.add_observer(console_observer)
+    scan_manager = ScanManager()
 
-    # Iniciar el escaneo
-    print("Iniciando escaneo...")
-    print(" p [Pause]  |  r [Resume]  |  s [Stop] ")
+    # Crear el comando
+    command = ScanDirectoryCommand(
+        directory="./folder-for-scanning",
+        scanner=scanner,
+        console_observer=ConsoleObserver(),
+    )
 
-    scanner.start_scan("./folder-for-scanning")
+    # Configurar el comando en el manager
+    scan_manager.set_on_scan(command)
 
     try:
-        while scanner.state in [ScannerState.SCANNING, ScannerState.PAUSED]:
-            time.sleep(0.1)
+        # Iniciar el escaneo
+        print("Iniciando escaneo...")
 
-            command = input().lower()
-            if command == "p":
-                scanner.pause_scan()
-            elif command == "r":
-                scanner.resume_scan()
-            elif command == "s":
-                scanner.stop_scan()
+        # Ejecutar el escaneo
+        scan_manager.execute_scan()
 
     except KeyboardInterrupt:
         print("\nDetención solicitada por el usuario...")
-        scanner.stop_scan()
+        scan_manager.cancel_current_scan()
 
 
 if __name__ == "__main__":
