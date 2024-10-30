@@ -5,9 +5,11 @@ import os
 import threading
 import time
 from typing import Dict, List, Set, Optional
-
+import random
 
 LINEAL_WORK_TIME = 2  # segundos
+# SCAN_DIRECTORY = "./folder-for-scanning"
+SCAN_DIRECTORY = "./clean-folder"
 
 
 class FileStatus(Enum):
@@ -143,7 +145,9 @@ class AntivirusScanner:
     def _analyze_content(self, contenido: str) -> str:
 
         # Simulamos tiempo de procesamiento
-        time.sleep(LINEAL_WORK_TIME)
+        work_time = random.randint(1, 5)
+        # time.sleep(LINEAL_WORK_TIME)
+        time.sleep(work_time)
 
         # Si encontramos alguna palabra virus en el contenido del archivo, devolvemos las palabras encontradas
         for palabra_amenaza in self.virus_words:
@@ -340,7 +344,7 @@ def main():
 
     # Crear el comando
     command = ScanDirectoryCommand(
-        directory="./folder-for-scanning",
+        directory=SCAN_DIRECTORY,
         scanner=scanner,
         console_observer=ConsoleObserver(),
     )
